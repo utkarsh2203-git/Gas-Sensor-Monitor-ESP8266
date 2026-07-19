@@ -1,59 +1,45 @@
- #define BLYNK_TEMPLATE_ID "TMPL3U0AxVlnl" 
-#define BLYNK_TEMPLATE_NAME "Gas Sensor Monitor" 
-#define BLYNK_AUTH_TOKEN "5Rqd40FymT6nrJ5FLwdjEJyGDianbT7e" 
- 
-#define BLYNK_PRINT Serial 
- 
-#include <ESP8266WiFi.h> 
-#include <BlynkSimpleEsp8266.h> 
- 
-// ---------------- Wi-Fi Credentials ---------------- 
-char ssid[] = "YOUR_WIFI_NAME";
-char pass[] = "YOUR_WIFI_PASSWORD";
-char auth[] = "YOUR_BLYNK_AUTH_TOKEN";
- 
-// ---------------- Sensor Setup ---------------- 
-#define GAS_PIN A0  // MQ-135 analog output 
- 
-unsigned long previousMillis = 0;  // For timing 
-const long interval = 30000;       // 30 seconds 
- 
-// ---------------- Send Gas Data ---------------- 
-void sendGasSensor() { 
-  int gasValue = analogRead(GAS_PIN); 
- 
-  // Print to Serial Monitor 
-  Serial.println("===================================="); 
-  Serial.print(" Gas Value (MQ-135): "); Serial.println(gasValue); 
- 
-  // Send to Blynk (Virtual Pin V2) 
-  Blynk.virtualWrite(V2, gasValue); 
- 
-  // Optional warning 
-  if (gasValue > 600) { 
-    Blynk.logEvent("pollution_alert", " Bad Air Quality Detected!"); 
-  } 
-} 
- 
-10 
- 
-// ---------------- Setup ---------------- 
-void setup() { 
-  Serial.begin(115200); 
-  Serial.println("Connecting to Blynk..."); 
-  Blynk.begin(auth, ssid, pass); 
-  Serial.println(" Gas Sensor Monitoring Started..."); 
-} 
- 
-// ---------------- Main Loop ---------------- 
-void loop() { 
-  Blynk.run(); 
- 
-  unsigned long currentMillis = millis(); 
-  if (currentMillis - previousMillis >= interval) { 
-    previousMillis = currentMillis; 
-    sendGasSensor(); 
-  } 
-} 
- 
- 
+import serial
+import time
+import requests
+
+# ---------------- Blynk Configuration ----------------
+BLYNK_AUTH_TOKEN = "YOUR_BLYNK_AUTH_TOKEN"
+
+# Replace with your ESP8266 COM Port
+SERIAL_PORT = "COM3"
+
+# Baud Rate
+BAUD_RATE = 115200
+
+# Blynk API URL
+BLYNK_URL = f"https://blynk.cloud/external/api/update?token={BLYNK_AUTH_TOKEN}&V2="
+
+# Open Serial Port
+ser = serial.Serial(SERIAL_PORT, BAUD_RATE)
+
+print("Gas Sensor Monitoring Started...")
+
+while True:
+    try:
+        if ser.in_waiting:
+            gas_value = ser.readline().decode().strip()
+
+            if gas_value.isdigit():
+
+                gas_value = int(gas_value)
+
+                print("=" * 40)
+                print("Gas Value (MQ-135):", gas_value)
+
+                # Send value to Blynk
+                requests.get(BLYNK_URL + str(gas_value))
+
+                # Warning
+                if gas_value > 600:
+                    print("Bad Air Quality Detected!")
+
+        time.sleep(1)
+
+    except KeyboardInterrupt:
+        print("Program Stopped")
+        break
