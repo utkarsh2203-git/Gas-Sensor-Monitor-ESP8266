@@ -1,0 +1,15 @@
+# Components Used
+
+## Hardware
+
+- ESP8266 NodeMCU
+- MQ-135 Gas Sensor
+- Breadboard
+- Jumper Wires
+- USB Cable
+
+## Software
+
+- Arduino IDE
+- Blynk IoT
+- ESP8266 Board Package
